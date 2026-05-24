@@ -1,13 +1,13 @@
 ﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
     <PropertyGroup>
         <ProjectGuid>{B7C3C1A6-6823-4484-A7A5-E2F2663176B1}</ProjectGuid>
-        <ProjectVersion>20.2</ProjectVersion>
+        <ProjectVersion>20.3</ProjectVersion>
         <FrameworkType>None</FrameworkType>
         <MainSource>JWTServer.dpr</MainSource>
         <Base>True</Base>
         <Config Condition="'$(Config)'==''">Debug</Config>
         <Platform Condition="'$(Platform)'==''">Win64</Platform>
-        <TargetedPlatforms>2</TargetedPlatforms>
+        <TargetedPlatforms>3</TargetedPlatforms>
         <AppType>Console</AppType>
         <ProjectName Condition="'$(ProjectName)'==''">JWTServer</ProjectName>
     </PropertyGroup>
@@ -31,6 +31,16 @@
     </PropertyGroup>
     <PropertyGroup Condition="('$(Platform)'=='iOSSimARM64' and '$(Base)'=='true') or '$(Base_iOSSimARM64)'!=''">
         <Base_iOSSimARM64>true</Base_iOSSimARM64>
+        <CfgParent>Base</CfgParent>
+        <Base>true</Base>
+    </PropertyGroup>
+    <PropertyGroup Condition="('$(Platform)'=='OSX64' and '$(Base)'=='true') or '$(Base_OSX64)'!=''">
+        <Base_OSX64>true</Base_OSX64>
+        <CfgParent>Base</CfgParent>
+        <Base>true</Base>
+    </PropertyGroup>
+    <PropertyGroup Condition="('$(Platform)'=='OSXARM64' and '$(Base)'=='true') or '$(Base_OSXARM64)'!=''">
+        <Base_OSXARM64>true</Base_OSXARM64>
         <CfgParent>Base</CfgParent>
         <Base>true</Base>
     </PropertyGroup>
@@ -69,7 +79,7 @@
     <PropertyGroup Condition="'$(Base)'!=''">
         <DCC_Namespace>System;Xml;Data;Datasnap;Web;Soap;$(DCC_Namespace)</DCC_Namespace>
         <DCC_DcuOutput>.\$(Platform)\$(Config)</DCC_DcuOutput>
-        <DCC_ExeOutput>.\$(Platform)\$(Config)</DCC_ExeOutput>
+        <DCC_ExeOutput>./</DCC_ExeOutput>
         <DCC_E>false</DCC_E>
         <DCC_N>false</DCC_N>
         <DCC_S>false</DCC_S>
@@ -137,12 +147,22 @@
         <VerInfo_UIDeviceFamily>iPhoneAndiPad</VerInfo_UIDeviceFamily>
         <VerInfo_IncludeVerInfo>true</VerInfo_IncludeVerInfo>
     </PropertyGroup>
+    <PropertyGroup Condition="'$(Base_OSX64)'!=''">
+        <VerInfo_Keys>CFBundleName=$(MSBuildProjectName);CFBundleDisplayName=$(MSBuildProjectName);CFBundleIdentifier=$(MSBuildProjectName);CFBundleVersion=1.0.0;CFBundleShortVersionString=1.0.0;CFBundlePackageType=APPL;CFBundleSignature=????;CFBundleAllowMixedLocalizations=YES;CFBundleExecutable=$(MSBuildProjectName);NSHighResolutionCapable=true;LSApplicationCategoryType=public.app-category.utilities;NSLocationUsageDescription=The reason for accessing the location information of the user;NSContactsUsageDescription=The reason for accessing the contacts;NSCalendarsUsageDescription=The reason for accessing the calendar data;NSRemindersUsageDescription=The reason for accessing the reminders;NSCameraUsageDescription=The reason for accessing the camera;NSMicrophoneUsageDescription=The reason for accessing the microphone;NSMotionUsageDescription=The reason for accessing the accelerometer;NSDesktopFolderUsageDescription=The reason for accessing the Desktop folder;NSDocumentsFolderUsageDescription=The reason for accessing the Documents folder;NSDownloadsFolderUsageDescription=The reason for accessing the Downloads folder;NSNetworkVolumesUsageDescription=The reason for accessing files on a network volume;NSRemovableVolumesUsageDescription=The reason for accessing files on a removable volume;NSSpeechRecognitionUsageDescription=The reason for requesting to send user data to Apple&apos;s speech recognition servers;ITSAppUsesNonExemptEncryption=false;NSBluetoothAlwaysUsageDescription=The reason for accessing the Bluetooth interface</VerInfo_Keys>
+        <BT_BuildType>Debug</BT_BuildType>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(Base_OSXARM64)'!=''">
+        <VerInfo_Keys>CFBundleName=$(MSBuildProjectName);CFBundleDisplayName=$(MSBuildProjectName);CFBundleIdentifier=$(MSBuildProjectName);CFBundleVersion=1.0.0;CFBundleShortVersionString=1.0.0;CFBundlePackageType=APPL;CFBundleSignature=????;CFBundleAllowMixedLocalizations=YES;CFBundleExecutable=$(MSBuildProjectName);NSHighResolutionCapable=true;LSApplicationCategoryType=public.app-category.utilities;NSLocationUsageDescription=The reason for accessing the location information of the user;NSContactsUsageDescription=The reason for accessing the contacts;NSCalendarsUsageDescription=The reason for accessing the calendar data;NSRemindersUsageDescription=The reason for accessing the reminders;NSCameraUsageDescription=The reason for accessing the camera;NSMicrophoneUsageDescription=The reason for accessing the microphone;NSMotionUsageDescription=The reason for accessing the accelerometer;NSDesktopFolderUsageDescription=The reason for accessing the Desktop folder;NSDocumentsFolderUsageDescription=The reason for accessing the Documents folder;NSDownloadsFolderUsageDescription=The reason for accessing the Downloads folder;NSNetworkVolumesUsageDescription=The reason for accessing files on a network volume;NSRemovableVolumesUsageDescription=The reason for accessing files on a removable volume;NSSpeechRecognitionUsageDescription=The reason for requesting to send user data to Apple&apos;s speech recognition servers;ITSAppUsesNonExemptEncryption=false;NSBluetoothAlwaysUsageDescription=The reason for accessing the Bluetooth interface</VerInfo_Keys>
+        <BT_BuildType>Debug</BT_BuildType>
+    </PropertyGroup>
     <PropertyGroup Condition="'$(Base_Win32)'!=''">
         <DCC_UsePackage>PascalScript_Core_D17;EIGVisual;dcldxInsDXE3;crcontrols170;office2K;pgdac170;fmxdae;tmsexdxe3;NexusDB312sr170;NxGridDsgn_dxe3;ZComponent;DBXSqliteDriver;AbbreviaVCL;PKIECtrl16;dac170;dcldxtrmddXE3;fmx;dclEQDBTLDXE3;IndySystem;NexusDB312pv170;TeeDB;dcldxBarExtDBItemsDXE3;frDXE3;vclib;inetdbbde;DBXInterBaseDriver;DataSnapClient;DataSnapCommon;DataSnapServer;NexusDB312lg170;DataSnapProviderClient;dcldxEdtrDXE3;DBXSybaseASEDriver;dcldxBarDXE3;DbxCommonDriver;dclEQTLDXE3;vclimg;RtmRxBDE170;dcldxExRwDXE3;dbxcds;dcldxdbtrdXE3;DatasnapConnectorsFreePascal;MetropolisUILiveTile;frxIBX17;fsBDE17;dclEQGridDXE3;NxDBGridDsgn_dxe3;vcldb;NexusDB312sd170;OXml;vcldsnap;dacvcl170;DBXDb2Driver;OmniThreadLibraryRuntimeXE3;advchartdxe3;DBXOracleDriver;CustomIPTransport;NxDBGridRun_dxe3;vclribbon;dsnap;IndyIPServer;cyPackDXE3;IndyCore;vcl;fmxase;IndyIPCommon;CloudService;DBXMSSQLDriver;FmxTeeUI;CodeSiteExpressPkg;dcldxsbDXE3;frxDB17;EIGEditors;fsIBX17;inetdbxpress;webdsnap;NexusDB312ll170;JclDeveloperTools;EIGMetier_DXE3;NxCollectionRun_dxe3;FlatStyle_XE3;gtPDFkitDXE3ProP;adortl;OmniXML_dXE3;RtmRxCtl170;dcldxGrEdDXE3;NxCollectionDsgn_dxe3;NxGridRun_dxe3;vacommPkgDXE3;EIGTools;frx17;fs17;NexusDB312sq170;dcldxForumLibDXE3;GanttPackageXE3;bindcompfmx;GR32_RSXE3;SynUni_DXE3;frxDBX17;vcldbx;frxTee17;NxCommonRun_dxe3;fsTee17;ZDbc;dcldxBarDBNavDXE3;rtl;dbrtl;DbxClientDriver;NxCommonDsgn_dxe3;ZPlain;bindcomp;inetdb;frxcs17;pgdacvcl170;sbridge170;Tee;JclContainers;DBXOdbcDriver;NxAddonsRun_dxe3;dcldxELibDXE3;xmlrtl;svnui;ibxpress;dcldxExELDXE3;dclECQDBCDXE3;RtfLabel_DXE3;HTMLEditor_DXE3;IndyProtocols;DBXMySQLDriver;NxSheetRun_dxe3;CompExternesDXE3;dcldxmdsdXE3;tmsdxe3;UIBD15Win32R;vclactnband;bindengine;soaprtl;bindcompdbx;FMXTee;TeeUI;bindcompvcl;fsADO17;vcwdXE3;Jcl;vclie;GR32_DSGN_RSXE3;frxADO17;ZCore;vcltouch;NexusDB312se170;EIGSysteme;websnap;EmbeddedWebBrowser_XE3;NexusDB312db170;VclSmp;DBXInformixDriver;dcldxPageControlDXE3;DataSnapConnectors;NxInspectorRun_dxe3;BSFDXE3;EIGCompta;dsnapcon;DBXFirebirdDriver;NexusDB312rb170;inet;pKSPPlanners2DXE3;dcldxBarExtItemsDXE3;SynEdit_RXE3;JclVcl;fsDB17;dacfmx170;ZParseSql;vclx;dclGraphicExDXE3;frxe17;dclfrxTee17;svn;DBXSybaseASADriver;EIGDB;tmsxlsdxe3;DXE3_SqlitePassDbo_Runtime;pgdacfmx170;fmxobj;NxInspectorDsgn_dxe3;bdertl;VirtualTreesR;frxBDE17;paxcomp_xe3;dbexpress;RtmRxDB170;DataSnapIndy10ServerTransport;IndyIPClient;$(DCC_UsePackage)</DCC_UsePackage>
         <DCC_Namespace>Winapi;System.Win;Data.Win;Datasnap.Win;Web.Win;Soap.Win;Xml.Win;Bde;$(DCC_Namespace)</DCC_Namespace>
         <VerInfo_Locale>1033</VerInfo_Locale>
         <Manifest_File>(None)</Manifest_File>
         <AppDPIAwarenessMode>none</AppDPIAwarenessMode>
+        <BT_BuildType>Debug</BT_BuildType>
+        <VerInfo_Keys>CompanyName=;FileDescription=$(MSBuildProjectName);FileVersion=1.0.0.0;InternalName=;LegalCopyright=;LegalTrademarks=;OriginalFilename=;ProgramID=com.embarcadero.$(MSBuildProjectName);ProductName=$(MSBuildProjectName);ProductVersion=1.0.0.0;Comments=</VerInfo_Keys>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Base_Win64)'!=''">
         <DCC_UsePackage>office2K;fmxdae;NxGridDsgn_dxe3;DBXSqliteDriver;fmx;IndySystem;TeeDB;vclib;DBXInterBaseDriver;DataSnapClient;DataSnapCommon;DataSnapServer;DataSnapProviderClient;DBXSybaseASEDriver;DbxCommonDriver;vclimg;dbxcds;DatasnapConnectorsFreePascal;NxDBGridDsgn_dxe3;vcldb;OXml;vcldsnap;DBXDb2Driver;DBXOracleDriver;CustomIPTransport;NxDBGridRun_dxe3;vclribbon;dsnap;IndyIPServer;IndyCore;vcl;fmxase;IndyIPCommon;DBXMSSQLDriver;inetdbxpress;webdsnap;JclDeveloperTools;NxCollectionRun_dxe3;adortl;NxCollectionDsgn_dxe3;NxGridRun_dxe3;bindcompfmx;NxCommonRun_dxe3;rtl;dbrtl;DbxClientDriver;NxCommonDsgn_dxe3;bindcomp;inetdb;Tee;JclContainers;DBXOdbcDriver;NxAddonsRun_dxe3;xmlrtl;ibxpress;IndyProtocols;DBXMySQLDriver;NxSheetRun_dxe3;vclactnband;bindengine;soaprtl;bindcompdbx;TeeUI;bindcompvcl;Jcl;vclie;vcltouch;websnap;VclSmp;DBXInformixDriver;DataSnapConnectors;NxInspectorRun_dxe3;dsnapcon;DBXFirebirdDriver;inet;JclVcl;vclx;DBXSybaseASADriver;fmxobj;NxInspectorDsgn_dxe3;VirtualTreesR;dbexpress;DataSnapIndy10ServerTransport;IndyIPClient;$(DCC_UsePackage)</DCC_UsePackage>
@@ -249,6 +269,7 @@
                     <VersionInfoKeys Name="CFBundleExecutable"/>
                 </VersionInfoKeys>
                 <Excluded_Packages>
+                    <Excluded_Packages Name="C:\Users\Public\Documents\Embarcadero\Studio\23.0\Bpl\edmGUI.bpl">EDM GUI Package</Excluded_Packages>
                     <Excluded_Packages Name="$(BDSBIN)\dcloffice2k290.bpl">Microsoft Office 2000 Sample Automation Server Wrapper Components</Excluded_Packages>
                     <Excluded_Packages Name="$(BDSBIN)\dclofficexp290.bpl">Microsoft Office XP Sample Automation Server Wrapper Components</Excluded_Packages>
                 </Excluded_Packages>
@@ -266,6 +287,18 @@
                 </DeployFile>
                 <DeployFile LocalName="$(BDS)\Redist\osx32\libcgunwind.1.0.dylib" Class="DependencyModule">
                     <Platform Name="OSX32">
+                        <Overwrite>true</Overwrite>
+                    </Platform>
+                </DeployFile>
+                <DeployFile LocalName="JWTServer.exe" Configuration="Debug" Class="ProjectOutput">
+                    <Platform Name="Win64">
+                        <RemoteName>JWTServer.exe</RemoteName>
+                        <Overwrite>true</Overwrite>
+                    </Platform>
+                </DeployFile>
+                <DeployFile LocalName="JWTServer.rsm" Configuration="Debug" Class="DebugSymbols">
+                    <Platform Name="Win64">
+                        <RemoteName>JWTServer.rsm</RemoteName>
                         <Overwrite>true</Overwrite>
                     </Platform>
                 </DeployFile>
@@ -376,6 +409,16 @@
                     </Platform>
                     <Platform Name="Android64">
                         <RemoteDir>res\values-v31</RemoteDir>
+                        <Operation>1</Operation>
+                    </Platform>
+                </DeployClass>
+                <DeployClass Name="AndroidSplashStylesV35">
+                    <Platform Name="Android">
+                        <RemoteDir>res\values-v35</RemoteDir>
+                        <Operation>1</Operation>
+                    </Platform>
+                    <Platform Name="Android64">
+                        <RemoteDir>res\values-v35</RemoteDir>
                         <Operation>1</Operation>
                     </Platform>
                 </DeployClass>
@@ -1116,7 +1159,9 @@
                 <Platform value="Android64">False</Platform>
                 <Platform value="iOSDevice64">False</Platform>
                 <Platform value="iOSSimARM64">False</Platform>
-                <Platform value="Win32">False</Platform>
+                <Platform value="OSX64">False</Platform>
+                <Platform value="OSXARM64">False</Platform>
+                <Platform value="Win32">True</Platform>
                 <Platform value="Win64">True</Platform>
             </Platforms>
         </BorlandProject>

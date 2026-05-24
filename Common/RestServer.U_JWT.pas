@@ -44,33 +44,33 @@ type
   protected
     procedure SessionCreate(Ctxt: TRestServerUriContext; var User: TAuthUser); override;
     procedure AuthenticationFailed(Ctxt: TRestServerURIContext; Reason: TOnAuthenticationFailedReason);
-
-    class function ClientGetSessionKey(Sender: TRestClientUri; User: TAuthUser;
-      const aNameValueParameters: array of const): RawUtf8;
   public
-    constructor Create(aServer: TRestServer);
+    function RetrieveSession(Ctxt: TRestServerUriContext): TAuthSession; override;
 
-    function RetrieveSession(Ctxt: TRestServerURIContext): TAuthSession; override;
-    function Auth(Ctxt: TRestServerURIContext): boolean; override;
-
-    class function ClientSetUser(Sender: TRestClientUri;
-      const aUserName, aPassword: RawUtf8;
-      aPasswordKind: TRestClientSetUserPassword = passClear;
-      const aHashSalt: RawUtf8 = ''; aHashRound: integer = 20000): boolean;
+    function Auth(Ctxt: TRestServerUriContext; const aUserName: RawUtf8): boolean; override;
   end;
 
   TRestServerAuthenticationJWTClass = class of TRestServerAuthenticationJWT;
+
+  TRestClientAuthenticationJWT = class(TRestClientAuthenticationHttpBasic)
+  protected
+    class function ClientGetSessionKey(Sender: TRestClientUri; User: TAuthUser; const aNameValueParameters: array of const): RawUtf8; override;
+  public
+    class function ClientSetUser(Sender: TRestClientUri; const aUserName, aPassword: RawUTF8): Boolean; reintroduce;
+  end;
 
   TRestHttpClientJWT = class(TRestHttpClientRequest)
   private
     fJWT: RawUTF8;
   protected
     procedure InternalSetClass; override;
-    function InternalRequest(const url, method: RawUTF8;
-      var Header, Data, DataType: RawUTF8): Int64Rec; override;
+    function InternalRequest(const url, method: RawUTF8; var Header, Data, DataType: RawUTF8): Int64Rec; override;
   public
-    function SetUser(const aUserName, aPassword: RawUTF8;
-      aHashedPassword: Boolean=false): boolean; reintroduce;
+    function IsTokenValid: RawUTF8;
+    function RefreshToken(const aUsername, aPassword: RawUTF8): RawUTF8;
+
+    function SetUser(const aUserName, aPassword: RawUTF8; aHashedPassword: Boolean=false): boolean; reintroduce;
+
     property jwt : RawUTF8 read fJWT write fJWT;
   end;
 
@@ -100,24 +100,23 @@ begin
     end;
 end;
 
-{ TSQLRestRoutingREST_JWT }
+{ TRestRoutingREST_JWT }
 
-procedure TRestRoutingREST_JWT.AuthenticationFailed(
-  Reason: TOnAuthenticationFailedReason);
+procedure TRestRoutingREST_JWT.AuthenticationFailed(Reason: TOnAuthenticationFailedReason);
 begin
   inherited AuthenticationFailed(Reason);
 end;
 
 { TSQLRestServerAuthenticationJWT }
 
-function TRestServerAuthenticationJWT.Auth(
-  Ctxt: TRestServerURIContext): boolean;
+function TRestServerAuthenticationJWT.Auth(Ctxt: TRestServerURIContext; const aUserName: RawUTF8): boolean;
 var
-  aUserName, aPassWord: RawUTF8;
+  aPassWord: RawUTF8;
   User: TAuthUser;
 begin
   result := False;
-  if AuthSessionRelease(Ctxt) then
+
+  if AuthSessionRelease(Ctxt, aUserName) then
     exit;
 
   if not Assigned(fServer.JWTForUnauthenticatedRequest) then
@@ -126,7 +125,6 @@ begin
     Exit;
   end;
 
-  aUserName := Ctxt.InputUTF8OrVoid['UserName'];
   aPassWord := Ctxt.InputUTF8OrVoid['Password'];
 
   if (aUserName<>'') and (length(aPassWord)>0) then
@@ -149,86 +147,13 @@ begin
   else AuthenticationFailed(Ctxt, afUnknownUser);
 end;
 
-procedure TRestServerAuthenticationJWT.AuthenticationFailed(Ctxt: TRestServerURIContext;
-  Reason: TOnAuthenticationFailedReason);
+procedure TRestServerAuthenticationJWT.AuthenticationFailed(Ctxt: TRestServerURIContext; Reason: TOnAuthenticationFailedReason);
 begin
   if Ctxt is TRestRoutingREST_JWT then
     TRestRoutingREST_JWT(Ctxt).AuthenticationFailed(Reason);
 end;
 
-class function TRestServerAuthenticationJWT.ClientGetSessionKey(Sender: TRestClientUri; User: TAuthUser;
-      const aNameValueParameters: array of const): RawUtf8;
-var
-  resp: RawUTF8;
-  values: array[0..9] of TValueEntA{TValuePUTF8Char};
-  a: integer;
-  algo: TRestServerAuthenticationSignedUri absolute a;
-begin
-  Result := '';
-  if (Sender.CallBackGet('Auth',aNameValueParameters,resp) = HTTP_SUCCESS) then
-    result := resp;
-end;
-
-class function TRestServerAuthenticationJWT.ClientSetUser(Sender: TRestClientUri;
-  const aUserName, aPassword: RawUtf8;
-  aPasswordKind: TRestClientSetUserPassword = passClear;
-  const aHashSalt: RawUtf8 = ''; aHashRound: integer = 20000): boolean;
-var
-  res: RawUTF8;
-  U: TAuthUser;
-  vTmp : Variant;
-begin
-  result := false;
-  if (aUserName='') or (Sender=nil) then
-    exit;
-  if not Sender.InheritsFrom(TRestHttpClientJWT) then
-    exit;
-
-  if aPasswordKind<>passClear then
-    raise ESecurityException.CreateUTF8('%.ClientSetUser(%) expects passClear',
-      [self,Sender]);
-  Sender.SessionClose; // ensure Sender.SessionUser=nil
-  try // inherited ClientSetUser() won't fit with Auth() method below
-    ClientSetUser(Sender, aUserName, aPassword);
-    TRestHttpClientJWT(Sender).jwt := '';
-    U := TAuthUser(Sender.Model.GetTableInherited(TAuthUser).Create);
-    try
-      U.LogonName := trim(aUserName);
-      res := ClientGetSessionKey(Sender,U,['Username', aUserName, 'password', aPassword]);
-
-      if res<>'' then
-      begin
-        vTmp := _JsonFast(res);
-        if DocVariantType.IsOfType(vTmp) then
-        begin
-          result := TRestHttpClientJWT(Sender).SessionCreate(
-            TRestClientAuthenticationClass(self), U,
-            TDocVariantData(vTmp).U['result']);
-          if result then
-            TRestHttpClientJWT(Sender).jwt := TDocvariantData(vTmp).U['jwt'];
-        end;
-      end;
-    finally
-      U.Free;
-    end;
-  finally
-    if not result then
-    begin
-      // on error, reverse all values
-      TRestHttpClientJWT(Sender).jwt := '';
-    end;
-    if Assigned(Sender.OnSetUser) then
-      Sender.OnSetUser(Sender); // always notify of user change, even if failed
-  end;
-end;
-
-constructor TRestServerAuthenticationJWT.Create(aServer: TRestServer);
-begin
-  inherited Create(aServer);
-end;
-
-function TRestServerAuthenticationJWT.RetrieveSession(
-  Ctxt: TRestServerURIContext): TAuthSession;
+function TRestServerAuthenticationJWT.RetrieveSession(Ctxt: TRestServerURIContext): TAuthSession;
 var
   aUserName : RawUTF8;
   User: TAuthUser;
@@ -246,30 +171,29 @@ begin
     Exit;
 
   vSessionPrivateSalt := '';
+
   if Ctxt.AuthenticationBearerToken <> '' then
-    if Ctxt.AuthenticationCheck(fServer.JWTForUnauthenticatedRequest) then
-    begin
+    if Ctxt.AuthenticationCheck(fServer.JWTForUnauthenticatedRequest) then begin
       aUserName := Ctxt.JWTContent.reg[jrcIssuer];
+
       User := GetUser(Ctxt,aUserName);
       try
-        if User <> nil then
-        begin
-          if Ctxt.Server.Sessions <> nil then
-          begin
+        if User <> nil then begin
+          if Ctxt.Server.Sessions <> nil then begin
             if Ctxt.JWTContent.data.GetValueIndex('sessionkey') >= 0 then
               vSessionPrivateSalt := Ctxt.JWTContent.data.U['sessionkey'];
 
             Ctxt.Server.Sessions.Safe.ReadWriteLock;
             try
               // Search session for User
-              if (reOneSessionPerUser in Ctxt.Call^.RestAccessRights^.AllowRemoteExecute) and
-                 (Ctxt.Server.Sessions<>nil) then
+              if (reOneSessionPerUser in Ctxt.Call^.RestAccessRights^.AllowRemoteExecute) and (Ctxt.Server.Sessions<>nil) then
                 for i := 0 to Pred(Ctxt.Server.Sessions.Count) do
-                  if TAuthSession(Ctxt.Server.Sessions[i]).User.ID = User.ID then
-                  begin
+                  if TAuthSession(Ctxt.Server.Sessions[i]).User.ID = User.ID then begin
                     Result := TAuthSession(Ctxt.Server.Sessions[i]);
+
                     Ctxt.Session := Result.ID;
-                    break;
+
+                    Break;
                   end;
 
               // Search session by privatesalt
@@ -294,8 +218,7 @@ begin
     end;
 end;
 
-procedure TRestServerAuthenticationJWT.SessionCreate(Ctxt: TRestServerUriContext;
-  var User: TAuthUser);
+procedure TRestServerAuthenticationJWT.SessionCreate(Ctxt: TRestServerUriContext; var User: TAuthUser);
 var
   i : Integer;
   Token : RawUTF8;
@@ -324,6 +247,70 @@ begin
   end;
 end;
 
+
+
+{ TRestClientAuthenticationJWT }
+
+class function TRestClientAuthenticationJWT.ClientGetSessionKey(Sender: TRestClientUri; User: TAuthUser; const aNameValueParameters: array of const): RawUtf8;
+var resp: RawUTF8;
+begin
+  Result := '';
+  if (Sender.CallBackGet('Auth',aNameValueParameters,resp) = HTTP_SUCCESS) then
+    result := resp;
+end;
+
+class function TRestClientAuthenticationJWT.ClientSetUser(Sender: TRestClientUri; const aUserName, aPassword: RawUTF8): Boolean;
+var res: RawUTF8;
+  U: TAuthUser;
+  vTmp : Variant;
+begin
+  Result := False;
+
+  if (aUserName = '') or (Sender = nil) then
+    Exit;
+
+  if not Sender.InheritsFrom(TRestHttpClientJWT) then
+    Exit;
+
+  Sender.SessionClose; // to make Sender.SessionUser = nil
+
+  try
+    ClientSetUserHttpOnly(Sender, aUserName, aPassword, '', 20000, daUndefined);
+
+    TRestHttpClientJWT(Sender).jwt := '';
+
+    U := TAuthUser(Sender.Model.GetTableInherited(TAuthUser).Create);
+    try
+      U.LogonName := trim(aUserName);
+
+      res := ClientGetSessionKey(Sender, U, ['Username', aUserName, 'password', aPassword]);
+
+      if res<>'' then begin
+        vTmp := _JsonFast(res);
+        if DocVariantType.IsOfType(vTmp) then begin
+          U.IDValue := UTF8ToInt64(TDocvariantData(vTmp).U['userid']);
+          Result := TRestHttpClientJWT(Sender).SessionCreate(TRestClientAuthenticationClass(self), mormot.rest.core.TAuthUser(U), TDocvariantData(vTmp).U['result']);
+          if Result then TRestHttpClientJWT(Sender).jwt := TDocvariantData(vTmp).U['jwt'];
+        end;
+      end;
+    finally
+      U.Free;
+    end;
+  finally
+    if not Result then begin
+      TRestHttpClientJWT(Sender).jwt := '';
+    end;
+
+    if Assigned(Sender.OnSetUser) then
+      Sender.OnSetUser(Sender); // always notify of user change, even if failed
+  end;
+end;
+
+
+
+
+
+
 { TSQLHttpClientJWT }
 
 function TRestHttpClientJWT.InternalRequest(const url, method: RawUTF8;
@@ -342,7 +329,7 @@ begin
       if h = 22 then
         header := copy(Header, h + Length(vBasic), Length(header))
       else
-        header := copy(Header, 1, h - 21) +
+        header := copy(Header, 1, h - 22) +
           copy(Header, h + Length(vBasic), Length(header));
       header := Trim(header);
     end;
@@ -354,7 +341,16 @@ end;
 procedure TRestHttpClientJWT.InternalSetClass;
 begin
   fRequestClass := TWinHTTP;
-  inherited;
+end;
+
+function TRestHttpClientJWT.IsTokenValid: RawUTF8;
+begin
+  CallBackGet('IsValidToken', [], Result);
+end;
+
+function TRestHttpClientJWT.RefreshToken(const aUsername, aPassword: RawUTF8): RawUTF8;
+begin
+  CallBackGet('RefreshToken', ['username', aUsername, 'password', aPassword], Result);
 end;
 
 function TRestHttpClientJWT.SetUser(const aUserName, aPassword: RawUTF8;
@@ -367,8 +363,8 @@ begin
     result := false;
     exit;
   end;
-  result := TRestServerAuthenticationJWT.
-    ClientSetUser(self,aUserName,aPassword, HASH[aHashedPassword]);
+
+  result := TRestClientAuthenticationJWT.ClientSetUser(self,aUserName,aPassword);
 end;
 
 end.

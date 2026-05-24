@@ -32,7 +32,6 @@ function CreateOrmModel(const aRoot : RawUTF8; const Tables: TOrmClassDynArray;
   const AuthUserRedefine : TAuthUserClass) : TOrmModel;
 const _SysTable : integer = 2;
 var Tb : TOrmClassDynArray;
-    dy : TDynArray;
     i : integer;
 begin
   SetLength(Tb, length(Tables) + _SysTable);

@@ -1,0 +1,48 @@
+﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <PropertyGroup>
+        <ProjectGuid>{93DFEE03-59B7-48B3-995A-FDDCC4BCC2BF}</ProjectGuid>
+    </PropertyGroup>
+    <ItemGroup>
+        <Projects Include="Server\JWTServer.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="WinClient\WinClient.dproj">
+            <Dependencies/>
+        </Projects>
+    </ItemGroup>
+    <ProjectExtensions>
+        <Borland.Personality>Default.Personality.12</Borland.Personality>
+        <Borland.ProjectType/>
+        <BorlandProject>
+            <Default.Personality/>
+        </BorlandProject>
+    </ProjectExtensions>
+    <Target Name="JWTServer">
+        <MSBuild Projects="Server\JWTServer.dproj"/>
+    </Target>
+    <Target Name="JWTServer:Clean">
+        <MSBuild Projects="Server\JWTServer.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="JWTServer:Make">
+        <MSBuild Projects="Server\JWTServer.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="WinClient">
+        <MSBuild Projects="WinClient\WinClient.dproj"/>
+    </Target>
+    <Target Name="WinClient:Clean">
+        <MSBuild Projects="WinClient\WinClient.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="WinClient:Make">
+        <MSBuild Projects="WinClient\WinClient.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="Build">
+        <CallTarget Targets="JWTServer;WinClient"/>
+    </Target>
+    <Target Name="Clean">
+        <CallTarget Targets="JWTServer:Clean;WinClient:Clean"/>
+    </Target>
+    <Target Name="Make">
+        <CallTarget Targets="JWTServer:Make;WinClient:Make"/>
+    </Target>
+    <Import Project="$(BDS)\Bin\CodeGear.Group.Targets" Condition="Exists('$(BDS)\Bin\CodeGear.Group.Targets')"/>
+</Project>
